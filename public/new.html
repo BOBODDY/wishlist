@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Item</title>
+
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/new.css">
+</head>
+<body>
+
+<header>
+  Add items to Nick's Gift List
+</header>
+
+<form id="giftForm" action="/addGift" method="post">
+  <div class="form-group">
+    <label for="name">Gift Name:</label>
+    <input type="text" id="name" name="name" required>
+  </div>
+
+  <div class="form-group">
+    <label for="description">Gift Description:</label>
+    <textarea id="description" name="description" rows="5"></textarea>
+  </div>
+
+  <div class="form-group">
+    <label for="imageURL">Image URL (optional):</label>
+    <input type="url" id="imageURL" name="imageURL">
+  </div>
+
+  <div class="form-group">
+    <label for="purchaseURL">Purchase URL (optional):</label>
+    <input type="url" id="purchaseURL" name="purchaseURL">
+  </div>
+
+  <div class="form-group">
+    <label for="estimatedPrice">Estimated Price (optional):</label>
+    <input type="number" id="estimatedPrice" name="estimatedPrice">
+  </div>
+
+  <button type="submit">Add Gift</button>
+</form>
+
+<script>
+  const form = document.getElementById('giftForm');
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(form);
+
+    var object = {};
+    formData.forEach(function(value, key){
+      object[key] = value;
+    });
+    var json = JSON.stringify(object);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://addgift-klg4trmwba-uc.a.run.app');
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        console.log('Gift added successfully!');
+      } else if (xhr.status !== 200) {
+        console.error('Error adding gift:', xhr.statusText);
+      }
+    };
+    xhr.send(json);
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <title>Nick's Christmas Wishlist</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- Place favicon.ico in the root directory -->
+
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/main.css">
+
+  <meta name="theme-color" content="#fafafa">
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+  <script src="js/vendor/modernizr-3.11.2.min.js"></script>
+  <script src="js/plugins.js"></script>
+  <script src="js/main.js"></script>
+
+  <header>
+    Nick's Gift List
+  </header>
+
+  <div id="results"></div>
+
+  <script>
+    $(document).ready(function() {
+      $.getJSON('https://getallgifts-klg4trmwba-uc.a.run.app', function(data) {
+        $.each(data, function(index, gift) {
+          console.log(gift);
+          let html = '<div class="gift">' +
+            '<div class="gift-header">' + gift.name + '</div>' +
+            '<p class="gift-description">' + gift.description + '</p>';
+
+
+          if (gift.hasOwnProperty('purchaseURL')) {
+            html += '<a href="' + gift.purchaseURL + '" target="_blank" class="gift-link"><img src="img/link.svg" class="svg-icon"> Website</a>';
+          }
+
+          if (gift.hasOwnProperty('imageURL')) {
+            html += '<img src="' + gift.imageURL + '" class="gift-img" width="100px" alt="An example image of the gift"/>';
+          }
+
+          const checkboxId = gift.id + 'claimed';
+          let isChecked;
+          if (gift.isClaimed) {
+            isChecked = "checked";
+          } else {
+            isChecked = "";
+          }
+          html += '<input class="gift-checkbox" type="checkbox" id="' + checkboxId + '" name="claimed" value="claimed" ' + isChecked + '>' +
+            '<label class="gift-checkbox-label" for="' + checkboxId +'">Claimed</label><br>'
+
+          html += '</div>';
+          $('#results').append(html);
+
+          const checkbox = document.getElementById(checkboxId);
+          checkbox.addEventListener('change', () => {
+            const url = 'https://claimgift-klg4trmwba-uc.a.run.app?giftId=' + gift.id + '&isClaimed=' + checkbox.checked;
+            fetch(url, {
+              method: 'PUT'
+            })
+              .then(response => response.body)
+              .then(data => location.reload());
+          })
+        });
+      });
+    });
+  </script>
+
+</body>
+
+</html>
