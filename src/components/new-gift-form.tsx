@@ -30,6 +30,7 @@ export function NewGiftForm() {
       imageURL: String(formData.get('imageURL') ?? ''),
       purchaseURL: String(formData.get('purchaseURL') ?? ''),
       estimatedPrice: String(formData.get('estimatedPrice') ?? ''),
+      isClaimable: formData.has('isClaimable'),
     };
 
     startTransition(async () => {
@@ -121,6 +122,23 @@ export function NewGiftForm() {
             className="form-input"
             disabled={isPending}
           />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="isClaimable" className="claim-label">
+            <input
+              type="checkbox"
+              id="isClaimable"
+              name="isClaimable"
+              className="claim-checkbox"
+              aria-describedby="claimable-help"
+              disabled={isPending}
+            />
+            <span>Claimable</span>
+          </label>
+          <p id="claimable-help" className="form-help">
+            Only one is wanted. Let someone claim this gift to avoid duplicates.
+          </p>
         </div>
 
         <div className="form-actions">

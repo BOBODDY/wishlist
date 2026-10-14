@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { gifts, type Gift } from '../../db/schema';
 import type { NewGift } from '../gift-input';
 import type { Db } from './db';
 
 export async function listGifts(db: Db): Promise<Gift[]> {
-  return db.select().from(gifts).orderBy(asc(gifts.id));
+  return db.select().from(gifts).orderBy(asc(gifts.isClaimed), asc(gifts.id));
 }
 
 export async function createGift(db: Db, input: NewGift): Promise<Gift> {
@@ -18,6 +18,7 @@ export async function createGift(db: Db, input: NewGift): Promise<Gift> {
       estimatedPrice: input.estimatedPrice,
       imageURL: input.imageURL,
       purchaseURL: input.purchaseURL,
+      isClaimable: input.isClaimable,
       isClaimed: false,
     })
     .returning();
@@ -32,7 +33,7 @@ export async function setGiftClaimed(
   const [row] = await db
     .update(gifts)
     .set({ isClaimed })
-    .where(eq(gifts.id, id))
+    .where(and(eq(gifts.id, id), eq(gifts.isClaimable, true)))
     .returning();
   return row ?? null;
 }

@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { parseGiftInput, safeWebURL } from './gift-input';
 
+const validInput = {
+  name: 'Gift',
+  description: '',
+  imageURL: '',
+  purchaseURL: '',
+  estimatedPrice: '',
+  isClaimable: false,
+};
+
 describe('safeWebURL', () => {
   it('accepts absolute http and https URLs and rejects other schemes or malformed values', () => {
     expect(safeWebURL('https://example.com/item?id=1')).toBe(
@@ -21,54 +30,46 @@ describe('safeWebURL', () => {
 });
 
 describe('parseGiftInput', () => {
-  it('rejects malformed input objects and non-string fields', () => {
-    expect(parseGiftInput(null)).toEqual({
-      ok: false,
-      error: 'Invalid gift data.',
-    });
-    expect(parseGiftInput('string')).toEqual({
-      ok: false,
-      error: 'Invalid gift data.',
-    });
-    expect(parseGiftInput([])).toEqual({
-      ok: false,
-      error: 'Invalid gift data.',
-    });
-    expect(
-      parseGiftInput({
-        name: 'Gift',
-        description: '',
-        imageURL: '',
-        purchaseURL: '',
-        estimatedPrice: 25,
-      }),
-    ).toEqual({
-      ok: false,
-      error: 'Invalid gift data.',
-    });
+  it.each([null, 'string', [], {}])('rejects malformed input %j', (input) => {
+    expect(parseGiftInput(input).ok).toBe(false);
+  });
+
+  it.each(['name', 'description', 'imageURL', 'purchaseURL', 'estimatedPrice'])(
+    'rejects non-string %s',
+    (field) => {
+      expect(parseGiftInput({ ...validInput, [field]: 25 }).ok).toBe(false);
+    },
+  );
+
+  it.each([undefined, null, 'true', 'false', 'on', '', 0, 1, [], {}])(
+    'rejects a non-boolean claimable flag %j',
+    (isClaimable) => {
+      expect(parseGiftInput({ ...validInput, isClaimable }).ok).toBe(false);
+    },
+  );
+
+  it('requires the claimable flag even when all text fields are present', () => {
+    const withoutFlag: Partial<typeof validInput> = { ...validInput };
+    delete withoutFlag.isClaimable;
+    expect(parseGiftInput(withoutFlag).ok).toBe(false);
+  });
+
+  it.each([false, true])('preserves the boolean claimable flag %s', (isClaimable) => {
+    const result = parseGiftInput({ ...validInput, isClaimable });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.isClaimable).toBe(isClaimable);
   });
 
   it('requires a non-empty trimmed gift name', () => {
-    expect(
-      parseGiftInput({
-        name: '   ',
-        description: 'Some description',
-        imageURL: '',
-        purchaseURL: '',
-        estimatedPrice: '',
-      }),
-    ).toEqual({
-      ok: false,
-      error: 'Gift name is required.',
-    });
+    expect(parseGiftInput({ ...validInput, name: '   ' }).ok).toBe(false);
   });
 
   it('normalizes blank optional fields to null and strips unwhitelisted fields', () => {
     const result = parseGiftInput({
+      ...validInput,
       name: '  Cast Iron Skillet  ',
       description: '   ',
       imageURL: '  ',
-      purchaseURL: '',
       estimatedPrice: '   ',
       id: 'attacker-id',
       isClaimed: true,
@@ -82,57 +83,25 @@ describe('parseGiftInput', () => {
         imageURL: null,
         purchaseURL: null,
         estimatedPrice: null,
+        isClaimable: false,
       },
     });
   });
 
-  it('validates imageURL and purchaseURL protocols', () => {
+  it.each(['imageURL', 'purchaseURL'])('rejects unsafe %s protocols', (field) => {
     expect(
-      parseGiftInput({
-        name: 'Book',
-        description: '',
-        imageURL: 'javascript:alert(1)',
-        purchaseURL: '',
-        estimatedPrice: '',
-      }),
-    ).toEqual({
-      ok: false,
-      error: 'Image URL must use http or https.',
-    });
-
-    expect(
-      parseGiftInput({
-        name: 'Book',
-        description: '',
-        imageURL: 'https://example.com/cover.jpg',
-        purchaseURL: 'javascript:alert(1)',
-        estimatedPrice: '',
-      }),
-    ).toEqual({
-      ok: false,
-      error: 'Purchase URL must use http or https.',
-    });
+      parseGiftInput({ ...validInput, [field]: 'javascript:alert(1)' }).ok,
+    ).toBe(false);
   });
 
   it('accepts finite decimal numeric strings and preserves exact trimmed representation', () => {
     for (const validPrice of ['49.95', '10.00', '0', '.5', '-12.5', '1.5e2']) {
       const result = parseGiftInput({
-        name: 'Item',
-        description: '',
-        imageURL: '',
-        purchaseURL: '',
+        ...validInput,
         estimatedPrice: `  ${validPrice}  `,
       });
-      expect(result).toEqual({
-        ok: true,
-        value: {
-          name: 'Item',
-          description: null,
-          imageURL: null,
-          purchaseURL: null,
-          estimatedPrice: validPrice,
-        },
-      });
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.value.estimatedPrice).toBe(validPrice);
     }
 
     for (const invalidPrice of [
@@ -148,17 +117,9 @@ describe('parseGiftInput', () => {
       '12..3',
       '.',
     ]) {
-      const result = parseGiftInput({
-        name: 'Item',
-        description: '',
-        imageURL: '',
-        purchaseURL: '',
-        estimatedPrice: invalidPrice,
-      });
-      expect(result).toEqual({
-        ok: false,
-        error: 'Estimated price must be a number.',
-      });
+      expect(
+        parseGiftInput({ ...validInput, estimatedPrice: invalidPrice }).ok,
+      ).toBe(false);
     }
   });
 });

@@ -60,7 +60,9 @@ export function GiftCard({ gift }: GiftCardProps) {
             </a>
           ) : null}
 
-          <ClaimControl giftId={gift.id} isClaimed={gift.isClaimed} />
+          {gift.isClaimable ? (
+            <ClaimControl giftId={gift.id} isClaimed={gift.isClaimed} />
+          ) : null}
         </div>
       </div>
     </article>

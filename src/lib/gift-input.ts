@@ -4,6 +4,7 @@ export type NewGift = {
   imageURL: string | null;
   purchaseURL: string | null;
   estimatedPrice: string | null;
+  isClaimable: boolean;
 };
 
 export type GiftActionResult = { ok: true } | { ok: false; error: string };
@@ -41,7 +42,8 @@ export function parseGiftInput(input: unknown): ParseGiftInputResult {
     typeof record.description !== 'string' ||
     typeof record.imageURL !== 'string' ||
     typeof record.purchaseURL !== 'string' ||
-    typeof record.estimatedPrice !== 'string'
+    typeof record.estimatedPrice !== 'string' ||
+    typeof record.isClaimable !== 'boolean'
   ) {
     return { ok: false, error: 'Invalid gift data.' };
   }
@@ -91,6 +93,7 @@ export function parseGiftInput(input: unknown): ParseGiftInputResult {
       imageURL,
       purchaseURL,
       estimatedPrice,
+      isClaimable: record.isClaimable,
     },
   };
 }

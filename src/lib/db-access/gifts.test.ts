@@ -1,10 +1,13 @@
+import { PGlite } from '@electric-sql/pglite';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { gifts } from '@/db/schema';
 import { createTestDb } from '@/db/test-harness';
 import { createGift, listGifts, setGiftClaimed } from './gifts';
 
 describe('gifts db-access', () => {
-  it('creates gifts in unclaimed state with generated text IDs', async () => {
+  it.each([false, true])('persists claimability %s and creates gifts unclaimed', async (isClaimable) => {
     const harness = await createTestDb();
     try {
       const created = await createGift(harness.db, {
@@ -13,11 +16,13 @@ describe('gifts db-access', () => {
         estimatedPrice: '85.00',
         imageURL: 'https://example.com/blanket.jpg',
         purchaseURL: 'https://example.com/buy-blanket',
+        isClaimable,
       });
 
       expect(typeof created.id).toBe('string');
       expect(created.id.length).toBeGreaterThan(0);
       expect(created.isClaimed).toBe(false);
+      expect(created.isClaimable).toBe(isClaimable);
       expect(created.estimatedPrice).toBe('85.00');
 
       const all = await listGifts(harness.db);
@@ -36,6 +41,7 @@ describe('gifts db-access', () => {
         estimatedPrice: null,
         imageURL: null,
         purchaseURL: null,
+        isClaimable: true,
       });
       const second = await createGift(harness.db, {
         name: 'Second Gift',
@@ -43,6 +49,7 @@ describe('gifts db-access', () => {
         estimatedPrice: null,
         imageURL: null,
         purchaseURL: null,
+        isClaimable: true,
       });
 
       const claimedOnce = await setGiftClaimed(harness.db, first.id, true);
@@ -88,6 +95,7 @@ describe('gifts db-access', () => {
           imageURL: '',
           purchaseURL: '',
           isClaimed: true,
+          isClaimable: true,
         },
         {
           id: 'a-firestore-doc-1',
@@ -97,6 +105,7 @@ describe('gifts db-access', () => {
           imageURL: null,
           purchaseURL: null,
           isClaimed: false,
+          isClaimable: true,
         },
       ]);
 
@@ -113,6 +122,7 @@ describe('gifts db-access', () => {
         imageURL: null,
         purchaseURL: null,
         isClaimed: false,
+        isClaimable: true,
       });
       expect(rows[1]).toEqual({
         id: 'z-firestore-doc-2',
@@ -122,6 +132,7 @@ describe('gifts db-access', () => {
         imageURL: '',
         purchaseURL: '',
         isClaimed: true,
+        isClaimable: true,
       });
 
       await expect(
@@ -132,6 +143,83 @@ describe('gifts db-access', () => {
       ).rejects.toThrow();
     } finally {
       await harness.close();
+    }
+  });
+
+  it('rejects direct claim mutations for nonclaimable gifts without changing any rows', async () => {
+    const harness = await createTestDb();
+    try {
+      const created = await createGift(harness.db, {
+        name: 'Coffee',
+        description: null,
+        estimatedPrice: null,
+        imageURL: null,
+        purchaseURL: null,
+        isClaimable: false,
+      });
+
+      expect(await setGiftClaimed(harness.db, created.id, true)).toBeNull();
+      expect(await setGiftClaimed(harness.db, created.id, false)).toBeNull();
+      expect(await listGifts(harness.db)).toEqual([created]);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('orders unclaimed before claimed, by ID within each group, and reorders after mutations', async () => {
+    const harness = await createTestDb();
+    try {
+      await harness.db.insert(gifts).values([
+        { id: 'd', name: 'D', isClaimable: true, isClaimed: true },
+        { id: 'a', name: 'A', isClaimable: true, isClaimed: true },
+        { id: 'c', name: 'C', isClaimable: false },
+        { id: 'b', name: 'B', isClaimable: true },
+      ]);
+
+      expect((await listGifts(harness.db)).map((gift) => gift.id)).toEqual([
+        'b', 'c', 'a', 'd',
+      ]);
+      await setGiftClaimed(harness.db, 'b', true);
+      expect((await listGifts(harness.db)).map((gift) => gift.id)).toEqual([
+        'c', 'a', 'b', 'd',
+      ]);
+      await setGiftClaimed(harness.db, 'a', false);
+      expect((await listGifts(harness.db)).map((gift) => gift.id)).toEqual([
+        'a', 'c', 'b', 'd',
+      ]);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('migrates existing gifts as claimable without changing claims and defaults new rows to nonclaimable', async () => {
+    const client = new PGlite();
+    try {
+      await client.exec(
+        readFileSync(path.resolve('drizzle/0000_needy_silver_sable.sql'), 'utf8'),
+      );
+      await client.exec(`
+        INSERT INTO gifts (id, name, is_claimed) VALUES
+          ('a', 'Existing unclaimed', false),
+          ('b', 'Existing claimed', true);
+      `);
+      await client.exec(
+        readFileSync(path.resolve('drizzle/0001_tidy_molten_man.sql'), 'utf8'),
+      );
+      await client.exec(
+        "INSERT INTO gifts (id, name) VALUES ('c', 'New default');",
+      );
+
+      const { rows } = await client.query(
+        'SELECT id, is_claimable, is_claimed FROM gifts ORDER BY id',
+      );
+      expect(rows).toEqual([
+        { id: 'a', is_claimable: true, is_claimed: false },
+        { id: 'b', is_claimable: true, is_claimed: true },
+        { id: 'c', is_claimable: false, is_claimed: false },
+      ]);
+    } finally {
+      await client.close();
     }
   });
 });
