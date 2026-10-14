@@ -4,6 +4,7 @@ import { refresh } from 'next/cache';
 import { db } from '@/db';
 import { createGift, setGiftClaimed } from '@/lib/db-access/gifts';
 import { parseGiftInput, type GiftActionResult } from '@/lib/gift-input';
+import { hasAddGiftAccess } from '@/lib/add-gift-auth';
 
 export async function addGiftAction(input: {
   name: string;
@@ -11,7 +12,12 @@ export async function addGiftAction(input: {
   imageURL: string;
   purchaseURL: string;
   estimatedPrice: string;
+  isClaimable: boolean;
 }): Promise<GiftActionResult> {
+  if (!(await hasAddGiftAccess())) {
+    return { ok: false, error: 'Please log in before adding a gift.' };
+  }
+
   const parsed = parseGiftInput(input);
   if (!parsed.ok) {
     return parsed;
@@ -55,7 +61,7 @@ export async function claimGiftAction(input: {
   }
 
   if (!updated) {
-    return { ok: false, error: 'Gift not found.' };
+    return { ok: false, error: 'Gift not found or not claimable.' };
   }
 
   refresh();

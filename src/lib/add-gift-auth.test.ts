@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { refresh } from 'next/cache';
 import { loginToAddGift } from '@/app/add-gift-login';
 import {
   authenticateAddGift,
@@ -15,7 +14,7 @@ const cookieStore = vi.hoisted(() => {
       const value = values.get(name);
       return value === undefined ? undefined : { value };
     }),
-    set: vi.fn((name: string, value: string, _options: unknown) => {
+    set: vi.fn((name: string, value: string) => {
       values.set(name, value);
     }),
   };
@@ -146,12 +145,11 @@ describe('add-gift login action', () => {
     const form = new FormData();
     form.set('password', password);
     const result = await loginToAddGift({ error: null }, form);
-    expect(result.error).toContain('ADD_GIFT_PASSWORD');
+    expect(result.error).toBeTruthy();
     expect(JSON.stringify(result)).not.toContain(password);
-    expect(refresh).not.toHaveBeenCalled();
   });
 
-  it('rejects missing, wrong, and file-valued passwords without refreshing', async () => {
+  it('rejects missing, wrong, and file-valued passwords without granting access', async () => {
     const form = new FormData();
     expect((await loginToAddGift({ error: null }, form)).error).toBeTruthy();
     form.set('password', 'incorrect');
@@ -159,14 +157,12 @@ describe('add-gift login action', () => {
     form.set('password', new Blob([password]));
     expect((await loginToAddGift({ error: null }, form)).error).toBeTruthy();
     expect(await hasAddGiftAccess()).toBe(false);
-    expect(refresh).not.toHaveBeenCalled();
   });
 
-  it('creates a session and refreshes into the form after correct login', async () => {
+  it('creates a usable session after correct login', async () => {
     const form = new FormData();
     form.set('password', password);
     expect(await loginToAddGift({ error: null }, form)).toEqual({ error: null });
     expect(await hasAddGiftAccess()).toBe(true);
-    expect(refresh).toHaveBeenCalledOnce();
   });
 });

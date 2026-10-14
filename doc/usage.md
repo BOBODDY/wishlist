@@ -3,6 +3,36 @@ table of contents](TOC.md)
 
 # Usage
 
+## Wishlist configuration and behavior
+
+The wishlist runs on Next.js and PostgreSQL. Configure the database variables
+shown in `.env.example`, then set `ADD_GIFT_PASSWORD` to a long, randomly generated
+secret in your local environment or hosting provider's server environment.
+Do not prefix it with `NEXT_PUBLIC_` or commit the real password.
+Restart or redeploy the application after changing it.
+
+The `/new.html` page shows a password-only login dialog until authenticated.
+Visitors can return to the wishlist without logging in. Both the page and the
+add-gift server action enforce authentication. Sessions last eight hours in a
+signed HttpOnly cookie; production requires HTTPS. Changing the password
+invalidates existing sessions. An unset or empty password disables adding gifts.
+Viewing the wishlist and claiming/unclaiming gifts remain public.
+
+When adding a gift, select **Claimable** if only one is wanted. This checkbox is
+unchecked by default. Only claimable gifts show a claim checkbox on their card.
+Checking it opens an **Are you sure?** dialog; Cancel or Escape leaves the gift
+unchanged, and **Confirm claim** marks it claimed. Unchecking a claimed gift
+immediately makes it available again. Claimed gifts appear after all unclaimed
+gifts, with ID ordering preserved within each group.
+
+Before running the updated application against an existing database, run
+`npm run db:migrate` with the target database environment configured. The
+claimability migration preserves existing gifts as claimable and defaults new
+database rows to nonclaimable. `npm run vercel-build` applies migrations before
+building automatically.
+
+The remaining sections describe the original HTML5 Boilerplate assets.
+
 The most basic usage of HTML5 Boilerplate is to create a static site or simple
 app. Once you've downloaded or cloned the project, that process looks something
 like this:
