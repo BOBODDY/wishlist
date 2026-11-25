@@ -2,16 +2,21 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition, type FormEvent } from 'react';
-import { addGiftAction } from '@/app/actions';
+import { useRef, useState, useTransition, type FormEvent } from 'react';
+import { addGiftAction, deleteGiftAction, updateGiftAction } from '@/app/actions';
+import type { Gift } from '@/db/schema';
 
-export function NewGiftForm() {
+export function GiftForm({ gift }: { gift?: Gift }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const mutationPending = useRef(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isPending || mutationPending.current) return;
     setError(null);
 
     const form = event.currentTarget;
@@ -32,10 +37,13 @@ export function NewGiftForm() {
       estimatedPrice: String(formData.get('estimatedPrice') ?? ''),
       isClaimable: formData.has('isClaimable'),
     };
+    mutationPending.current = true;
 
     startTransition(async () => {
       try {
-        const result = await addGiftAction(payload);
+        const result = gift
+          ? await updateGiftAction({ giftId: gift.id, ...payload })
+          : await addGiftAction(payload);
         if (!result.ok) {
           setError(result.error);
           return;
@@ -43,7 +51,29 @@ export function NewGiftForm() {
         router.push('/');
         router.refresh();
       } catch {
-        setError('Could not add gift. Try again.');
+        setError(`Could not ${gift ? 'save' : 'add'} gift. Try again.`);
+      } finally {
+        mutationPending.current = false;
+      }
+    });
+  }
+
+  function handleDelete() {
+    if (!gift || isPending || mutationPending.current) return;
+    mutationPending.current = true;
+    setDeleteError(null);
+    startTransition(async () => {
+      try {
+        const result = await deleteGiftAction({ giftId: gift.id });
+        if (!result.ok) {
+          setDeleteError(result.error);
+          mutationPending.current = false;
+          return;
+        }
+        window.location.replace('/');
+      } catch {
+        setDeleteError('Could not delete gift. Try again.');
+        mutationPending.current = false;
       }
     });
   }
@@ -65,6 +95,7 @@ export function NewGiftForm() {
             type="text"
             id="name"
             name="name"
+            defaultValue={gift?.name ?? ''}
             className="form-input"
             required
             disabled={isPending}
@@ -78,6 +109,7 @@ export function NewGiftForm() {
           <textarea
             id="description"
             name="description"
+            defaultValue={gift?.description ?? ''}
             className="form-textarea"
             rows={5}
             disabled={isPending}
@@ -92,6 +124,7 @@ export function NewGiftForm() {
             type="url"
             id="imageURL"
             name="imageURL"
+            defaultValue={gift?.imageURL ?? ''}
             className="form-input"
             disabled={isPending}
           />
@@ -105,6 +138,7 @@ export function NewGiftForm() {
             type="url"
             id="purchaseURL"
             name="purchaseURL"
+            defaultValue={gift?.purchaseURL ?? ''}
             className="form-input"
             disabled={isPending}
           />
@@ -118,6 +152,7 @@ export function NewGiftForm() {
             type="number"
             id="estimatedPrice"
             name="estimatedPrice"
+            defaultValue={gift?.estimatedPrice ?? ''}
             step="any"
             className="form-input"
             disabled={isPending}
@@ -130,6 +165,7 @@ export function NewGiftForm() {
               type="checkbox"
               id="isClaimable"
               name="isClaimable"
+              defaultChecked={gift?.isClaimable ?? false}
               className="claim-checkbox"
               aria-describedby="claimable-help"
               disabled={isPending}
@@ -143,13 +179,67 @@ export function NewGiftForm() {
 
         <div className="form-actions">
           <button type="submit" className="btn-primary" disabled={isPending}>
-            {isPending ? 'Adding…' : 'Add Gift'}
+            {isPending ? (gift ? 'Saving…' : 'Adding…') : (gift ? 'Save Gift' : 'Add Gift')}
           </button>
+          {gift ? (
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={isPending}
+              onClick={() => {
+                if (isPending || mutationPending.current) return;
+                setDeleteError(null);
+                dialogRef.current?.showModal();
+              }}
+            >
+              Delete Gift
+            </button>
+          ) : null}
           <Link href="/" className="btn-secondary">
             Back to wishlist
           </Link>
         </div>
       </form>
+      {gift ? (
+        <dialog
+          ref={dialogRef}
+          className="claim-dialog"
+          aria-labelledby="delete-gift-title"
+          aria-describedby="delete-gift-description"
+          onCancel={(event) => {
+            if (isPending || mutationPending.current) event.preventDefault();
+          }}
+        >
+          <h2 id="delete-gift-title" className="status-panel-title">
+            Delete gift?
+          </h2>
+          <p id="delete-gift-description" className="status-panel-text">
+            Delete “{gift.name}”? This is permanent and cannot be undone.
+          </p>
+          {deleteError ? (
+            <p role="alert" className="inline-alert">{deleteError}</p>
+          ) : null}
+          <div className="form-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              autoFocus
+              disabled={isPending}
+              onClick={() => dialogRef.current?.close()}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={isPending}
+              onClick={handleDelete}
+            >
+              {isPending ? 'Deleting…' : 'Confirm delete'}
+            </button>
+          </div>
+        </dialog>
+      ) : null}
     </div>
   );
 }

@@ -8,6 +8,11 @@ export async function listGifts(db: Db): Promise<Gift[]> {
   return db.select().from(gifts).orderBy(asc(gifts.isClaimed), asc(gifts.id));
 }
 
+export async function getGift(db: Db, id: string): Promise<Gift | null> {
+  const [row] = await db.select().from(gifts).where(eq(gifts.id, id)).limit(1);
+  return row ?? null;
+}
+
 export async function createGift(db: Db, input: NewGift): Promise<Gift> {
   const [row] = await db
     .insert(gifts)
@@ -23,6 +28,29 @@ export async function createGift(db: Db, input: NewGift): Promise<Gift> {
     })
     .returning();
   return row;
+}
+
+export async function updateGift(db: Db, id: string, input: NewGift): Promise<Gift | null> {
+  const [row] = await db
+    .update(gifts)
+    .set({
+      name: input.name,
+      description: input.description,
+      estimatedPrice: input.estimatedPrice,
+      imageURL: input.imageURL,
+      purchaseURL: input.purchaseURL,
+      isClaimable: input.isClaimable,
+      // Use the current row's claim, never a potentially stale editor snapshot.
+      isClaimed: input.isClaimable ? gifts.isClaimed : false,
+    })
+    .where(eq(gifts.id, id))
+    .returning();
+  return row ?? null;
+}
+
+export async function deleteGift(db: Db, id: string): Promise<Gift | null> {
+  const [row] = await db.delete(gifts).where(eq(gifts.id, id)).returning();
+  return row ?? null;
 }
 
 export async function setGiftClaimed(

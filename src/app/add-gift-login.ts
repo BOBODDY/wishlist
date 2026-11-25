@@ -12,7 +12,7 @@ export async function loginToAddGift(
   const result = await authenticateAddGift(formData.get('password'));
   if (result === 'not-configured') {
     return {
-      error: 'Adding gifts is unavailable. Ask the site owner to configure ADD_GIFT_PASSWORD on the server.',
+      error: 'Gift management is unavailable. Ask the site owner to configure ADD_GIFT_PASSWORD on the server.',
     };
   }
   if (result === 'invalid-password') {

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { gifts } from '@/db/schema';
 import { createTestDb } from '@/db/test-harness';
-import { createGift, listGifts, setGiftClaimed } from './gifts';
+import { createGift, deleteGift, getGift, listGifts, setGiftClaimed, updateGift } from './gifts';
 
 describe('gifts db-access', () => {
   it.each([false, true])('persists claimability %s and creates gifts unclaimed', async (isClaimable) => {
@@ -220,6 +220,121 @@ describe('gifts db-access', () => {
       ]);
     } finally {
       await client.close();
+    }
+  });
+
+  it('gets legacy IDs, edits every allowed field, clears nullable fields, and ignores injected fields', async () => {
+    const harness = await createTestDb();
+    try {
+      const [original, other] = await harness.db.insert(gifts).values([
+        { id: 'legacy-firestore-id', name: 'Original', isClaimable: true },
+        { id: 'other-id', name: 'Other', isClaimable: true },
+      ]).returning();
+      expect(await getGift(harness.db, original.id)).toEqual(original);
+      const changes = {
+        name: 'Updated',
+        description: 'New description',
+        estimatedPrice: '125.50',
+        imageURL: 'https://example.com/image.jpg',
+        purchaseURL: 'https://example.com/buy',
+        isClaimable: true,
+        id: 'injected-id',
+        isClaimed: true,
+      };
+      expect(await updateGift(harness.db, original.id, changes)).toEqual({
+        ...original,
+        name: changes.name,
+        description: changes.description,
+        estimatedPrice: changes.estimatedPrice,
+        imageURL: changes.imageURL,
+        purchaseURL: changes.purchaseURL,
+      });
+      expect(await getGift(harness.db, changes.id)).toBeNull();
+
+      const cleared = {
+        name: 'Cleared',
+        description: null,
+        estimatedPrice: null,
+        imageURL: null,
+        purchaseURL: null,
+        isClaimable: false,
+      };
+      expect(await updateGift(harness.db, original.id, cleared)).toEqual({
+        id: original.id,
+        ...cleared,
+        isClaimed: false,
+      });
+      expect(await getGift(harness.db, other.id)).toEqual(other);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('preserves a claim made after loading an editor and atomically clears it when disabled', async () => {
+    const harness = await createTestDb();
+    try {
+      const original = await createGift(harness.db, {
+        name: 'Original',
+        description: null,
+        estimatedPrice: null,
+        imageURL: null,
+        purchaseURL: null,
+        isClaimable: true,
+      });
+      await setGiftClaimed(harness.db, original.id, true);
+      const updated = await updateGift(harness.db, original.id, { ...original, name: 'Edited' });
+      expect(updated).toEqual({ ...original, name: 'Edited', isClaimed: true });
+      const disabled = await updateGift(harness.db, original.id, { ...original, isClaimable: false });
+      expect(disabled).toEqual({ ...original, isClaimable: false, isClaimed: false });
+      expect(await setGiftClaimed(harness.db, original.id, true)).toBeNull();
+      expect(await updateGift(harness.db, original.id, original)).toEqual(original);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it.each([false, true])('maintains claim invariants during competing updates with claimability %s', async (isClaimable) => {
+    const harness = await createTestDb();
+    try {
+      const original = await createGift(harness.db, {
+        name: 'Original',
+        description: null,
+        estimatedPrice: null,
+        imageURL: null,
+        purchaseURL: null,
+        isClaimable: true,
+      });
+      await Promise.all([
+        setGiftClaimed(harness.db, original.id, true),
+        updateGift(harness.db, original.id, { ...original, isClaimable }),
+      ]);
+      expect(await getGift(harness.db, original.id)).toEqual({
+        ...original,
+        isClaimable,
+        isClaimed: isClaimable,
+      });
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('returns null for missing records and deletes exactly one legacy ID', async () => {
+    const harness = await createTestDb();
+    try {
+      const [first, second] = await harness.db.insert(gifts).values([
+        { id: 'legacy-id', name: 'First', isClaimable: true, isClaimed: true },
+        { id: 'legacy-id-2', name: 'Second' },
+      ]).returning();
+      expect(await getGift(harness.db, 'missing')).toBeNull();
+      expect(await updateGift(harness.db, 'missing', first)).toBeNull();
+      expect(await deleteGift(harness.db, 'missing')).toBeNull();
+      expect(await getGift(harness.db, first.id)).toEqual(first);
+      expect(await deleteGift(harness.db, first.id)).toEqual(first);
+      expect(await deleteGift(harness.db, first.id)).toBeNull();
+      expect(await getGift(harness.db, first.id)).toBeNull();
+      expect(await listGifts(harness.db)).toEqual([second]);
+    } finally {
+      await harness.close();
     }
   });
 });

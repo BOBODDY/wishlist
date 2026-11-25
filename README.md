@@ -1,6 +1,6 @@
 # Wishlist
 
-A small gift wishlist site. Anyone can browse gifts and claim (or unclaim) the ones marked claimable; adding gifts is protected by a shared password.
+A small gift wishlist site. Anyone can browse gifts and claim (or unclaim) the ones marked claimable; adding, editing, and deleting gifts are protected by a shared password.
 
 Built with Next.js 16 (App Router, React 19), TypeScript, Drizzle ORM, and PostgreSQL. Production runs on `postgres.js` (e.g. Neon on Vercel); local development and tests use [PGlite](https://pglite.dev).
 
@@ -10,6 +10,9 @@ Built with Next.js 16 (App Router, React 19), TypeScript, Drizzle ORM, and Postg
 |---|---|
 | `/` | The wishlist. Gifts are listed unclaimed first, then claimed. Claiming asks for confirmation; unclaiming is immediate. |
 | `/new.html` | Add a gift. Requires logging in with `ADD_GIFT_PASSWORD`; sessions last eight hours. |
+| `/edit/[giftId]` | Edit or delete a gift, reached through its public **Edit gift** link. Requires the same password and eight-hour session as adding a gift. |
+
+The shared gift form lets you edit the name, description, image URL, purchase URL, estimated price, and claimability. Estimated prices are saved but remain hidden on the wishlist. Editing a gift preserves its claim state while it remains claimable; disabling claimability clears the claim atomically. Deleting a gift requires confirmation and permanently removes it.
 
 ## Getting started
 
@@ -20,7 +23,7 @@ npm install
 cp .env.example .env
 ```
 
-Set `ADD_GIFT_PASSWORD` in `.env` if you want to add gifts locally. Then, in separate terminals:
+Set `ADD_GIFT_PASSWORD` in `.env` if you want to add, edit, or delete gifts locally. Then, in separate terminals:
 
 ```sh
 # 1. Start the local PGlite Postgres server (data persists in ./.dev-db)
@@ -44,7 +47,7 @@ The PGlite server accepts only one connection at a time, so keep `DB_POOL_MAX=1`
 | `DATABASE_URL` | Yes* | Postgres connection string used by the app. `POSTGRES_URL` is accepted as a fallback. |
 | `DATABASE_URL_UNPOOLED` | No | Direct (non-pooled) connection; preferred by migrations and `drizzle-kit` when set. |
 | `DB_POOL_MAX` | No | Connection pool size. Defaults to `1` on Vercel, `10` elsewhere. Use `1` with the local PGlite server. |
-| `ADD_GIFT_PASSWORD` | No | Password for `/new.html`. When unset, adding gifts is disabled; viewing and claiming stay public. Use a long random value and never expose it as `NEXT_PUBLIC_*`. Changing it invalidates existing sessions. |
+| `ADD_GIFT_PASSWORD` | No | Shared password for adding, editing, and deleting gifts (`/new.html`, `/edit/[giftId]`, and their mutation actions). When unset, gift management is disabled; viewing and claiming stay public. Use a long random value and never expose it as `NEXT_PUBLIC_*`. Changing it invalidates existing sessions. |
 | `DEV_DB_PORT` | No | Port for `npm run db:dev` (default `55432`). |
 | `DEV_DB_DIR` | No | Data directory for `npm run db:dev` (default `./.dev-db`). |
 
@@ -71,9 +74,11 @@ src/
   app/
     page.tsx            Wishlist page (dynamic Server Component)
     new.html/page.tsx   Add-gift page, gated by the login dialog
-    actions.ts          Server Actions: addGiftAction, claimGiftAction
+    edit/[giftId]/page.tsx Edit/delete page, gated by the same login dialog
+    actions.ts          Server Actions: addGiftAction, updateGiftAction, deleteGiftAction, claimGiftAction
     add-gift-login.ts   Login Server Action
-  components/           Gift card, claim control, add-gift form, login dialog
+  components/           Gift card, claim control, login dialog
+    gift-form.tsx       Shared GiftForm for adding, editing, and confirming deletion
   db/
     schema.ts           Drizzle schema for the `gifts` table
     index.ts            postgres.js + Drizzle client
@@ -99,7 +104,7 @@ The `gifts` table:
 | `image_url` | text | Optional; must be `http`/`https` |
 | `purchase_url` | text | Optional; must be `http`/`https` |
 | `is_claimable` | boolean | Defaults to `false` for new gifts |
-| `is_claimed` | boolean | Defaults to `false`; can only change when `is_claimable` is `true` |
+| `is_claimed` | boolean | Defaults to `false`; public claims require `is_claimable`; editing preserves it unless claimability is disabled, which clears it |
 
 To change the schema, edit `src/db/schema.ts`, run `npm run db:generate`, and commit the generated files in `drizzle/`.
 

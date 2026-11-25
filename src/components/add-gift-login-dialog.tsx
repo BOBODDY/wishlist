@@ -5,7 +5,13 @@ import { useActionState, useEffect, useRef } from 'react';
 import { loginToAddGift } from '@/app/add-gift-login';
 import styles from './add-gift-login-dialog.module.css';
 
-export function AddGiftLoginDialog({ configured }: { configured: boolean }) {
+export function AddGiftLoginDialog({
+  configured,
+  purpose = 'add',
+}: {
+  configured: boolean;
+  purpose?: 'add' | 'edit';
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [state, action, pending] = useActionState(loginToAddGift, { error: null });
 
@@ -28,12 +34,14 @@ export function AddGiftLoginDialog({ configured }: { configured: boolean }) {
       onCancel={(event) => event.preventDefault()}
     >
       <h1 id="add-gift-login-title" className={styles.title}>
-        Log in to add a gift
+        {purpose === 'edit' ? 'Log in to edit or delete a gift' : 'Log in to add a gift'}
       </h1>
       <p id="add-gift-login-description" className={styles.description}>
-        {configured
-          ? 'Enter the password to add gifts to the wishlist.'
-          : 'Adding gifts is unavailable. Ask the site owner to configure ADD_GIFT_PASSWORD on the server.'}
+        {!configured
+          ? 'Gift management is unavailable. Ask the site owner to configure ADD_GIFT_PASSWORD on the server.'
+          : purpose === 'edit'
+            ? 'Enter the password to edit or delete gifts on the wishlist.'
+            : 'Enter the password to add gifts to the wishlist.'}
       </p>
       <form action={action} className="gift-form">
         {state.error ? (

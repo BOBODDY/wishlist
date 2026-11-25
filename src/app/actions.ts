@@ -2,7 +2,7 @@
 
 import { refresh } from 'next/cache';
 import { db } from '@/db';
-import { createGift, setGiftClaimed } from '@/lib/db-access/gifts';
+import { createGift, deleteGift, setGiftClaimed, updateGift } from '@/lib/db-access/gifts';
 import { parseGiftInput, type GiftActionResult } from '@/lib/gift-input';
 import { hasAddGiftAccess } from '@/lib/add-gift-auth';
 
@@ -31,6 +31,78 @@ export async function addGiftAction(input: {
   }
 
   refresh();
+  return { ok: true };
+}
+
+function giftIdFromInput(input: unknown): string | null {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    return null;
+  }
+  const record = input as Record<string, unknown>;
+  return typeof record.giftId === 'string' ? record.giftId.trim() || null : null;
+}
+
+export async function updateGiftAction(input: {
+  giftId: string;
+  name: string;
+  description: string;
+  imageURL: string;
+  purchaseURL: string;
+  estimatedPrice: string;
+  isClaimable: boolean;
+}): Promise<GiftActionResult> {
+  if (!(await hasAddGiftAccess())) {
+    return { ok: false, error: 'Please log in before editing a gift.' };
+  }
+
+  const giftId = giftIdFromInput(input);
+  if (!giftId) {
+    return { ok: false, error: 'Invalid gift ID.' };
+  }
+  const parsed = parseGiftInput(input);
+  if (!parsed.ok) {
+    return parsed;
+  }
+
+  let updated;
+  try {
+    updated = await updateGift(db, giftId, parsed.value);
+  } catch (err) {
+    console.error('Failed to update gift:', err);
+    return { ok: false, error: 'Could not update gift. Try again.' };
+  }
+  if (!updated) {
+    return { ok: false, error: 'Gift not found.' };
+  }
+
+  refresh();
+  return { ok: true };
+}
+
+export async function deleteGiftAction(input: {
+  giftId: string;
+}): Promise<GiftActionResult> {
+  if (!(await hasAddGiftAccess())) {
+    return { ok: false, error: 'Please log in before deleting a gift.' };
+  }
+
+  const giftId = giftIdFromInput(input);
+  if (!giftId) {
+    return { ok: false, error: 'Invalid gift ID.' };
+  }
+
+  let deleted;
+  try {
+    deleted = await deleteGift(db, giftId);
+  } catch (err) {
+    console.error('Failed to delete gift:', err);
+    return { ok: false, error: 'Could not delete gift. Try again.' };
+  }
+  if (!deleted) {
+    return { ok: false, error: 'Gift not found.' };
+  }
+
+  // The client navigates home; refreshing this deleted gift's edit route would render a 404.
   return { ok: true };
 }
 

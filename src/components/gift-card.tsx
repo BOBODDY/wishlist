@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Gift } from '@/db/schema';
 import { safeWebURL } from '@/lib/gift-input';
 import { ClaimControl } from './claim-control';
@@ -59,6 +60,14 @@ export function GiftCard({ gift }: GiftCardProps) {
               <span>Website</span>
             </a>
           ) : null}
+
+          <Link
+            href={`/edit/${encodeURIComponent(gift.id)}`}
+            className="gift-link"
+            aria-label={`Edit gift: ${gift.name}`}
+          >
+            Edit gift
+          </Link>
 
           {gift.isClaimable ? (
             <ClaimControl giftId={gift.id} isClaimed={gift.isClaimed} />
