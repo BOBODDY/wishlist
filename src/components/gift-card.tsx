@@ -14,65 +14,57 @@ export function GiftCard({ gift }: GiftCardProps) {
   const description = gift.description?.trim() ? gift.description.trim() : null;
 
   return (
-    <article
-      className={`gift-card glass-surface${gift.isClaimed ? ' gift-card--claimed' : ''}`}
-    >
-      <div className="gift-card-body">
-        <div className="gift-card-header">
-          <h2 className="gift-card-title">{gift.name}</h2>
-          {gift.isClaimed ? (
-            <span className="gift-status-pill">Claimed</span>
-          ) : null}
-        </div>
-
-        {safeImageUrl ? (
-          <GiftImage src={safeImageUrl} alt={gift.name} />
+    <article className={`gift-card${gift.isClaimed ? ' gift-card--claimed' : ''}`}>
+      <div className="gift-card-media">
+        <GiftImage src={safeImageUrl} alt={gift.name} />
+        {gift.isClaimed ? (
+          <span className="gift-status-pill">Claimed</span>
         ) : null}
+      </div>
 
+      <div className="gift-card-body">
+        <h2 className="gift-card-title">{gift.name}</h2>
         {description ? (
           <p className="gift-description">{description}</p>
         ) : null}
       </div>
 
-      <div className="gift-card-footer">
-        <div className="gift-card-actions">
-          {safePurchaseUrl ? (
-            <a
-              href={safePurchaseUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="gift-link"
-            >
-              <svg
-                className="gift-link-icon"
-                viewBox="0 0 20 20"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.9"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M11 3h6v6" />
-                <path d="M17 3L9 11" />
-                <path d="M15 11v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
-              </svg>
-              <span>Website</span>
-            </a>
-          ) : null}
-
-          <Link
-            href={`/edit/${encodeURIComponent(gift.id)}`}
+      <div className="gift-card-actions">
+        {safePurchaseUrl ? (
+          <a
+            href={safePurchaseUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="gift-link"
-            aria-label={`Edit gift: ${gift.name}`}
           >
-            Edit gift
-          </Link>
+            <span>Website</span>
+            <svg
+              className="gift-link-icon"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M7 4h9v9" />
+              <path d="M16 4L4 16" />
+            </svg>
+          </a>
+        ) : null}
 
-          {gift.isClaimable ? (
-            <ClaimControl giftId={gift.id} isClaimed={gift.isClaimed} />
-          ) : null}
-        </div>
+        <Link
+          href={`/edit/${encodeURIComponent(gift.id)}`}
+          className="gift-link"
+          aria-label={`Edit gift: ${gift.name}`}
+        >
+          Edit
+        </Link>
+
+        {gift.isClaimable ? (
+          <ClaimControl giftId={gift.id} isClaimed={gift.isClaimed} />
+        ) : null}
       </div>
     </article>
   );

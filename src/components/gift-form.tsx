@@ -79,7 +79,7 @@ export function GiftForm({ gift }: { gift?: Gift }) {
   }
 
   return (
-    <div className="form-panel glass-surface">
+    <div className="form-panel surface">
       <form className="gift-form" onSubmit={handleSubmit} noValidate>
         {error ? (
           <p role="alert" className="inline-alert">

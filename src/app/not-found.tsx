@@ -6,7 +6,7 @@ export default function NotFoundPage() {
     <>
       <SiteHeader />
       <main id="main-content" tabIndex={-1} className="page-container">
-        <section className="status-panel glass-surface">
+        <section className="status-panel surface">
           <h1 className="status-panel-title">Page not found</h1>
           <p className="status-panel-text">
             The page you are looking for does not exist.

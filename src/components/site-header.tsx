@@ -7,7 +7,7 @@ export interface SiteHeaderProps {
 export function SiteHeader({ currentPath }: SiteHeaderProps) {
   return (
     <div className="site-header-wrap">
-      <header className="site-header glass-surface">
+      <header className="site-header">
         <Link href="/" className="site-brand">
           Nick&apos;s Gift List
         </Link>

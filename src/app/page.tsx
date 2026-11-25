@@ -24,7 +24,7 @@ export default async function WishlistPage() {
         </div>
 
         {gifts.length === 0 ? (
-          <section className="status-panel glass-surface">
+          <section className="status-panel surface">
             <h2 className="status-panel-title">No gifts yet</h2>
             <p className="status-panel-text">
               Start building the wishlist by adding a gift idea.

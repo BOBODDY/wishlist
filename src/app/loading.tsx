@@ -9,7 +9,7 @@ export default function LoadingWishlist() {
           role="status"
           aria-live="polite"
           aria-label="Loading wishlist"
-          className="status-panel glass-surface"
+          className="status-panel surface"
         >
           <p className="status-panel-title">Loading wishlist…</p>
         </section>
