@@ -26,6 +26,7 @@ yarn-error.log*
 # env files
 .env*
 !.env.example
+.db_connection
 
 # vercel
 .vercel
