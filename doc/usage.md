@@ -12,8 +12,9 @@ Do not prefix it with `NEXT_PUBLIC_` or commit the real password.
 Restart or redeploy the application after changing it.
 
 The `/new.html` page shows a password-only login dialog until authenticated.
-Visitors can return to the wishlist without logging in. Both the page and the
-add-gift server action enforce authentication. Sessions last eight hours in a
+Visitors can return to the wishlist or use the Mathews Mobile link inside the
+dialog without logging in. Both the page and the add-gift server action enforce
+authentication. Sessions last eight hours in a
 signed HttpOnly cookie; production requires HTTPS. Changing the password
 invalidates existing sessions. An unset or empty password disables adding gifts.
 Viewing the wishlist and claiming/unclaiming gifts remain public.
@@ -30,6 +31,40 @@ Before running the updated application against an existing database, run
 claimability migration preserves existing gifts as claimable and defaults new
 database rows to nonclaimable. `npm run vercel-build` applies migrations before
 building automatically.
+
+### Chromatic Print theme
+
+The app uses an opaque warm-dark surface palette, violet actions, system fonts,
+and a static decorative header strip at `public/image/chromatic-grain.webp`.
+Theme tokens and existing semantic component classes live in
+`src/styles/globals.css`; the login dialog also has its own CSS module. The
+header art is never placed beneath controls, and removing or blocking it leaves
+all navigation usable. Reduced-motion preferences disable transitions; keyboard
+focus has a 3px ring, and skip links move focus to the main landmark.
+
+The theme does not change public viewing/claiming or password-protected adding.
+Both the regular header and the modal gate link to `https://mathewsmobile.dev/`
+in the same tab.
+
+Local theme smoke coverage uses a new disposable PGlite directory, never an
+existing database: set `DEV_DB_DIR` and `DEV_DB_PORT` for `npm run db:dev`, then
+explicitly point `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, and `POSTGRES_URL` at
+that loopback server with `DB_POOL_MAX=1`. Run migrations and seed disposable
+gifts before starting the web server. Stop that web server before any direct
+fixture writes because PGlite accepts only one connection.
+
+The Chromatic Print smoke exercised the gift grid, missing-image fallback,
+claim cancellation/confirmation/persistence/unclaiming, wrong and correct
+passwords, the modal home link, default-nonclaimable gift creation, not-found
+navigation, and the empty state at desktop and phone sizes. Responsive checks
+also covered 768px and 320px widths and doubled CSS zoom, with no horizontal
+overflow. Rendered text contrast was at least 6.15:1 in the sampled grid/form
+states; input and claim-control boundaries measured 3.74:1.
+
+Publishing `wishlist.mathewsmobile.dev` requires associating that domain with
+the existing hosting project, adding the DNS record supplied by that project,
+and waiting for domain verification and HTTPS issuance. Local preview checks
+do not establish production deployment or domain readiness.
 
 The remaining sections describe the original HTML5 Boilerplate assets.
 

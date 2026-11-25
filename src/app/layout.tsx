@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#f7f4ee',
+  themeColor: '#161419',
 };
 
 export default function RootLayout({
@@ -29,8 +29,6 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Skip to main content
         </a>
-        <div className="aurora-backdrop" aria-hidden="true" />
-        <div className="aurora-grain" aria-hidden="true" />
         <div className="app-shell">{children}</div>
       </body>
     </html>

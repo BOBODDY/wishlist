@@ -4,7 +4,7 @@ export default function LoadingWishlist() {
   return (
     <>
       <SiteHeader />
-      <main id="main-content" className="page-container">
+      <main id="main-content" tabIndex={-1} className="page-container">
         <section
           role="status"
           aria-live="polite"

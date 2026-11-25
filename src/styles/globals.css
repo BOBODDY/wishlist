@@ -1,31 +1,30 @@
 :root {
-  --bg-base: #f7f4ee;
-  --aurora-peach: #ffc8ae;
-  --aurora-lilac: #c8bcfa;
-  --aurora-mint: #bee6d6;
-  --ink-primary: #242337;
-  --ink-secondary: #484660;
-  --ink-muted: #5a5775;
-  --accent-violet: #514096;
-  --accent-violet-hover: #3f3178;
-  --accent-violet-soft: rgba(81, 64, 150, 0.11);
-  --claimed-bg: rgba(190, 230, 214, 0.45);
-  --claimed-border: rgba(34, 94, 73, 0.35);
-  --claimed-ink: #1b4b3a;
-  --danger-bg: rgba(179, 38, 30, 0.1);
-  --danger-border: rgba(179, 38, 30, 0.38);
-  --danger-ink: #7a1c16;
-  --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-bg-strong: rgba(255, 255, 255, 0.84);
-  --glass-border: rgba(255, 255, 255, 0.82);
-  --glass-outline: rgba(36, 35, 55, 0.09);
-  --glass-shadow:
-    0 18px 42px -18px rgba(36, 35, 55, 0.14),
-    0 2px 10px -2px rgba(36, 35, 55, 0.06),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.85);
+  --bg-base: #161419;
+  --ink-primary: #F5EFE6;
+  --ink-secondary: #C1B7C5;
+  --ink-muted: #C1B7C5;
+  --accent-violet: #C5A8FF;
+  --accent-violet-hover: #D5BFFF;
+  --accent-violet-soft: rgba(197, 168, 255, 0.14);
+  --claimed-bg: rgba(169, 213, 179, 0.16);
+  --claimed-border: #A9D5B3;
+  --claimed-ink: #A9D5B3;
+  --danger-bg: rgba(255, 180, 171, 0.12);
+  --danger-border: #FFB4AB;
+  --danger-ink: #FFB4AB;
+  --glass-bg: #211E25;
+  --glass-bg-strong: #2B2630;
+  --glass-border: #49414F;
+  --glass-outline: transparent;
+  --glass-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --focus-ring: #A9C9FF;
+  --on-accent: #161419;
+  --control-border: #817487;
+  color-scheme: dark;
   --radius-panel: 22px;
   --radius-control: 14px;
-  --transition-fast: 130ms ease;
+  --transition-fast: 150ms ease;
 }
 
 *,
@@ -37,10 +36,9 @@
 html {
   background-color: var(--bg-base);
   color: var(--ink-primary);
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.6;
   -webkit-text-size-adjust: 100%;
-  overflow-x: clip;
 }
 
 body {
@@ -49,35 +47,8 @@ body {
   background-color: var(--bg-base);
   color: var(--ink-primary);
   position: relative;
-  overflow-x: clip;
 }
 
-/* Decorative aurora gradient and static grain backdrop */
-.aurora-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-  background-color: var(--bg-base);
-  background-image:
-    radial-gradient(circle at 12% 16%, rgba(255, 200, 174, 0.78) 0%, rgba(255, 200, 174, 0) 54%),
-    radial-gradient(circle at 86% 14%, rgba(200, 188, 250, 0.76) 0%, rgba(200, 188, 250, 0) 52%),
-    radial-gradient(circle at 74% 82%, rgba(190, 230, 214, 0.8) 0%, rgba(190, 230, 214, 0) 56%),
-    radial-gradient(circle at 22% 84%, rgba(255, 200, 174, 0.5) 0%, rgba(255, 200, 174, 0) 48%);
-}
-
-.aurora-grain {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: url('/img/noise.svg');
-  background-repeat: repeat;
-  background-size: 180px 180px;
-  opacity: 0.075;
-  mix-blend-mode: multiply;
-}
 
 .app-shell {
   position: relative;
@@ -98,7 +69,7 @@ body {
   display: inline-flex;
   align-items: center;
   background: var(--accent-violet);
-  color: #ffffff;
+  color: var(--on-accent);
   font-weight: 600;
   text-decoration: none;
   border-radius: var(--radius-control);
@@ -114,26 +85,18 @@ a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
-  outline: 2.5px solid var(--accent-violet);
-  outline-offset: 2px;
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
 }
 
-/* Glass surface */
+/* Opaque shared surface */
 .glass-surface {
   background: var(--glass-bg);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow), 0 0 0 1px var(--glass-outline);
   border-radius: var(--radius-panel);
 }
 
-@supports not (backdrop-filter: blur(1px)) {
-  .glass-surface {
-    background: #fcfaf6;
-    border-color: rgba(36, 35, 55, 0.14);
-  }
-}
 
 /* Layout container */
 .page-container {
@@ -157,6 +120,15 @@ textarea:focus-visible {
   padding: 16px 16px 0;
 }
 
+.site-header-wrap::before {
+  content: "";
+  display: block;
+  height: 72px;
+  border-radius: 20px 20px 0 0;
+  background: var(--glass-bg-strong) url('/image/chromatic-grain.webp') center / cover;
+  pointer-events: none;
+}
+
 @media (min-width: 640px) {
   .site-header-wrap {
     padding: 24px 24px 0;
@@ -170,6 +142,9 @@ textarea:focus-visible {
   justify-content: space-between;
   gap: 12px 16px;
   padding: 10px 16px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  min-width: 0;
 }
 
 @media (min-width: 640px) {
@@ -194,7 +169,7 @@ textarea:focus-visible {
 
 .site-brand:hover {
   color: var(--accent-violet);
-  background-color: rgba(81, 64, 150, 0.06);
+  background-color: var(--accent-violet-soft);
 }
 
 .site-nav {
@@ -224,13 +199,13 @@ textarea:focus-visible {
 
 .site-nav-link:hover {
   color: var(--ink-primary);
-  background-color: rgba(81, 64, 150, 0.07);
+  background-color: var(--accent-violet-soft);
 }
 
 .site-nav-link[aria-current="page"] {
   color: var(--accent-violet);
   background-color: var(--accent-violet-soft);
-  border-color: rgba(81, 64, 150, 0.24);
+  border-color: var(--accent-violet);
 }
 
 /* Page hero */
@@ -256,9 +231,9 @@ textarea:focus-visible {
 .page-title {
   margin: 0;
   font-size: clamp(2.25rem, 5vw, 4rem);
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.08;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   color: var(--ink-primary);
   overflow-wrap: anywhere;
 }
@@ -279,7 +254,7 @@ textarea:focus-visible {
   padding: 10px 20px;
   border-radius: var(--radius-control);
   background-color: var(--accent-violet);
-  color: #ffffff;
+  color: var(--on-accent);
   font-family: inherit;
   font-size: 0.975rem;
   font-weight: 650;
@@ -287,9 +262,7 @@ textarea:focus-visible {
   text-decoration: none;
   border: 1px solid transparent;
   cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    transform var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -309,14 +282,14 @@ textarea:focus-visible {
   min-height: 44px;
   padding: 10px 18px;
   border-radius: var(--radius-control);
-  background-color: var(--glass-bg-strong);
+  background-color: var(--glass-bg);
   color: var(--ink-primary);
   font-family: inherit;
   font-size: 0.95rem;
   font-weight: 600;
   line-height: 1.2;
   text-decoration: none;
-  border: 1px solid rgba(36, 35, 55, 0.16);
+  border: 1px solid var(--control-border);
   cursor: pointer;
   transition:
     background-color var(--transition-fast),
@@ -325,7 +298,7 @@ textarea:focus-visible {
 }
 
 .btn-secondary:hover {
-  background-color: #ffffff;
+  background-color: var(--glass-bg-strong);
   border-color: var(--accent-violet);
   color: var(--accent-violet);
 }
@@ -363,15 +336,12 @@ textarea:focus-visible {
   min-width: 0;
   position: relative;
   overflow: hidden;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition: border-color var(--transition-fast);
 }
 
 .gift-card--claimed {
-  border-color: rgba(34, 94, 73, 0.42);
-  box-shadow:
-    0 18px 42px -18px rgba(36, 35, 55, 0.14),
-    0 2px 10px -2px rgba(36, 35, 55, 0.06),
-    inset 0 4px 0 0 #2b7a5e;
+  border-color: var(--claimed-border);
+  box-shadow: var(--glass-shadow), inset 0 4px 0 0 var(--claimed-border);
 }
 
 .gift-card-body {
@@ -416,8 +386,8 @@ textarea:focus-visible {
   width: 100%;
   aspect-ratio: 4 / 3;
   border-radius: 14px;
-  background-color: rgba(255, 255, 255, 0.66);
-  border: 1px solid rgba(36, 35, 55, 0.08);
+  background-color: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -451,7 +421,7 @@ textarea:focus-visible {
 .gift-card-footer {
   margin-top: 18px;
   padding-top: 14px;
-  border-top: 1px solid rgba(36, 35, 55, 0.09);
+  border-top: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -472,8 +442,8 @@ textarea:focus-visible {
   min-height: 44px;
   padding: 8px 14px;
   border-radius: 12px;
-  background-color: rgba(81, 64, 150, 0.08);
-  border: 1px solid rgba(81, 64, 150, 0.2);
+  background-color: var(--accent-violet-soft);
+  border: 1px solid var(--accent-violet);
   color: var(--accent-violet);
   font-size: 0.925rem;
   font-weight: 650;
@@ -485,7 +455,7 @@ textarea:focus-visible {
 }
 
 .gift-link:hover {
-  background-color: rgba(81, 64, 150, 0.15);
+  background-color: var(--glass-bg-strong);
   border-color: var(--accent-violet);
   color: var(--accent-violet-hover);
 }
@@ -515,15 +485,15 @@ textarea:focus-visible {
   font-size: 0.95rem;
   font-weight: 650;
   color: var(--ink-primary);
-  background-color: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(36, 35, 55, 0.14);
+  background-color: var(--glass-bg);
+  border: 1px solid var(--control-border);
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast);
 }
 
 .claim-label:hover {
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: var(--glass-bg-strong);
   border-color: var(--accent-violet);
 }
 
@@ -557,7 +527,7 @@ textarea:focus-visible {
 }
 
 .claim-dialog::backdrop {
-  background: rgba(36, 35, 55, 0.45);
+  background: rgba(0, 0, 0, 0.65);
 }
 
 .claim-dialog .status-panel-text {
@@ -644,8 +614,8 @@ textarea:focus-visible {
   min-height: 46px;
   padding: 10px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(36, 35, 55, 0.22);
-  background-color: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--control-border);
+  background-color: var(--glass-bg);
   color: var(--ink-primary);
   font-family: inherit;
   font-size: 1rem;
@@ -662,12 +632,13 @@ textarea:focus-visible {
 
 .form-input:hover,
 .form-textarea:hover {
-  border-color: rgba(81, 64, 150, 0.48);
+  border-color: var(--accent-violet);
+  background-color: var(--glass-bg-strong);
 }
 
 .form-input:focus,
 .form-textarea:focus {
-  background-color: #ffffff;
+  background-color: var(--glass-bg-strong);
   border-color: var(--accent-violet);
 }
 
@@ -683,8 +654,8 @@ textarea:focus-visible {
   *,
   *::before,
   *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
+    transition: none !important;
+    animation: none !important;
     scroll-behavior: auto !important;
   }
 }

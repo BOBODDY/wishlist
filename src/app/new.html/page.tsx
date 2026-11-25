@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default async function AddGiftPage() {
   if (!(await hasAddGiftAccess())) {
     return (
-      <main id="main-content" className="page-container">
+      <main id="main-content" tabIndex={-1} className="page-container">
         <AddGiftLoginDialog configured={isAddGiftPasswordConfigured()} />
       </main>
     );
@@ -20,7 +20,7 @@ export default async function AddGiftPage() {
   return (
     <>
       <SiteHeader currentPath="/new.html" />
-      <main id="main-content" className="page-container">
+      <main id="main-content" tabIndex={-1} className="page-container">
         <div className="page-hero">
           <div className="page-hero-copy">
             <h1 className="page-title">Add a gift</h1>

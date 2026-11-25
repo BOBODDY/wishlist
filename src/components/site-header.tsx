@@ -26,6 +26,9 @@ export function SiteHeader({ currentPath }: SiteHeaderProps) {
           >
             Add gift
           </Link>
+          <a href="https://mathewsmobile.dev/" className="site-nav-link">
+            Mathews Mobile
+          </a>
         </nav>
       </header>
     </div>

@@ -12,7 +12,7 @@ export default async function WishlistPage() {
   return (
     <>
       <SiteHeader currentPath="/" />
-      <main id="main-content" className="page-container">
+      <main id="main-content" tabIndex={-1} className="page-container">
         <div className="page-hero">
           <div className="page-hero-copy">
             <h1 className="page-title">Nick&apos;s Gift List</h1>

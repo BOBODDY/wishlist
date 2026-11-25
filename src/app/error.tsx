@@ -23,7 +23,7 @@ export default function WishlistError({
   return (
     <>
       <SiteHeader />
-      <main id="main-content" className="page-container">
+      <main id="main-content" tabIndex={-1} className="page-container">
         <section role="alert" className="status-panel glass-surface">
           <h1 className="status-panel-title">Could not load the wishlist.</h1>
           <button

@@ -69,6 +69,9 @@ export function AddGiftLoginDialog({ configured }: { configured: boolean }) {
           <Link href="/" className="btn-secondary">
             Back to wishlist
           </Link>
+          <a href="https://mathewsmobile.dev/" className="btn-secondary">
+            Mathews Mobile
+          </a>
         </div>
       </form>
     </dialog>
